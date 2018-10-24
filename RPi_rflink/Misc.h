@@ -12,5 +12,6 @@ float ul2float(unsigned long ul);
 void PrintHex8(uint8_t *data, uint8_t length);
 void PrintHexByte(uint8_t data);
 byte reverseBits(byte data);
+int split(const char *str, char c, char ***arr);
 
 #endif
