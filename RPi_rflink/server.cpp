@@ -45,7 +45,7 @@ int socket_send(const char* buf, const int size)
 	int ret=send(clientSocket, buf, size, 0);
 	if ( ret == -1 ) {  // +1 for NUL terminator
 		clientSocket=-1;
-		Serial.set_send_function(NULL); // disable Serial.println send line by socket = disable this function
+		//Serial.set_send_function(NULL); // disable Serial.println send line by socket = disable this function
 		log(LOG_ERROR,"TCP server: Problem send data.");
 		log(LOG_ERROR,"TCP server: Connection close.");
 		close(clientSocket);
@@ -99,11 +99,11 @@ int TCPserver(int port)
 		log(LOG_STATUS, pbuffer);
 		//log(LOG_STATUS,"TCP server: Client connect.");
 		// --------------------- conction is stored now can work -----------------------------
-		Serial.set_send_function(socket_send); // enable Serial.println send line by socket
+		Serial.set_send_function(common_send); // enable Serial.println send line by socket
 		Serial.print(WELCOME);
 		sprintf(inBuf,"R%02x;",REVNR);
 		Serial.println(inBuf); 
-		StartScanEventTheader(); // create separate thread
+		//StartScanEventTheader(); // create separate thread
 		while( clientSocket!=-1 ){ // enableRawScan is use together as flag for enable server
 			if (socket_getline(inBuf, BUFSIZE)==-1){ //get line into inBuf
 				log(LOG_ERROR,"TCP server: End when reading input.");
@@ -116,11 +116,11 @@ int TCPserver(int port)
 				break;
 			}
 		}
-		Serial.set_send_function(NULL); // disable Serial.println send line by socket
+		//Serial.set_send_function(NULL); // disable Serial.println send line by socket
 		close(clientSocket);
 		//std::cout << "Connection close." << std::endl;
 		log(LOG_ERROR,"TCP server: Connection close.");
-		StopScanEventTheader();
+		//StopScanEventTheader();
 	}
 	while (true);
 	// next newer run (only for inspiration)

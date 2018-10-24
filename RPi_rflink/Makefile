@@ -14,7 +14,7 @@ prepare: | createDirPlugins ./Plugins/Make_Generated_list_plugin.txt ./Plugins/M
 	$(MAKE) RFlink
 
 # variable object conatin project files for compilation with .o (make use default macros for create .o from .c or .cpp)
-objects = ./Base.o ./RawSignal.o ./server.o ./Plug.o ./Misc.o ./arduino/EmulateArduino.o
+objects = ./Base.o ./RawSignal.o ./server.o ./Plug.o ./Misc.o ./arduino/EmulateArduino.o ./Mqtt.o
 #objects =
 
 # NOTICE main diference between = and :=
@@ -29,7 +29,7 @@ objects = ./Base.o ./RawSignal.o ./server.o ./Plug.o ./Misc.o ./arduino/EmulateA
 allowed_plagins = $(shell cat ./Plugins/Make_Generated_list_plugin.txt )
 
 RFlink: $(objects) $(allowed_plagins)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $+ -o $@ -lwiringPi -lpthread
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $+ -o $@ -lwiringPi -lpthread -lmosquitto
 
 clean:
 	$(RM) ./RFlink ./*.o ./*.gch ./arduino/*.o ./arduino/*.gch ./Plugins/* ; rmdir ./Plugins

@@ -118,4 +118,6 @@ void log(int level, std::string str);											// log with endline
 //functions prototype for serve incoming packet
 int serve_input(char* InputBuffer_Serial);
 
+int common_send(const char* buf, const int size);
+
 #endif

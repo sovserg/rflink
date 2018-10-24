@@ -37,4 +37,5 @@ It is possible to use RFlink via a network connection using ser2net.
 You can now use the RFLink Gateway with the following home automation software:   
 Domoticz   
 Jeedom   
+MajorDoMo (via mosquitto server and MQTT module) 
 ------------------------   

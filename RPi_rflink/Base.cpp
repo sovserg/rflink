@@ -1,8 +1,10 @@
+#include <getopt.h>
 #include "Base.h"
 #include <wiringPi.h>
 // My header files
 #include "server.h"
 #include "Plug.h"
+#include "Mqtt.h"
 
 //****************************************************************************************************************************************
 // seting start values for global variables and strutures
@@ -31,6 +33,8 @@ char InputBuffer_Serial[BUFSIZE];                                               
 
 // serial port emulation for print and write functions
 Ser Serial;
+
+boolean mqtt_init_need=false;
 
 // log functions
 void log(int level,std::string str, boolean endLine)  						// log withou end line
@@ -147,7 +151,7 @@ int serve_input(char* inBuf){
 	if (ValidCommand != 0) {
 	   if (ValidCommand==1) {
 		  sprintf(InputBuffer_Serial,"20;%02X;OK;",PKSequenceNumber++);
-		  Serial.println( InputBuffer_Serial ); 
+		  Serial.println( InputBuffer_Serial );
 	   } else {
 		  sprintf(InputBuffer_Serial, "20;%02X;CMD UNKNOWN;", PKSequenceNumber++); // Node and packet number 
 		  Serial.println( InputBuffer_Serial );
@@ -158,50 +162,122 @@ int serve_input(char* inBuf){
 }
 
 void help(char *argv) {
-	printf("Use:\n %s \n %s TCP_port_number \n %s TCP_port_number log_level_number \n %s TCP_port_number TX_PIN RX_PIN \n %s TCP_port_number TX_PIN RX_PIN log_level_number.\n or %s -h  for this help\n\n TCP_port_number: 1-65535\n log_level number: 0-nothing, 1-error log, 2-warning, 3-running status, 4-debug\n TX_PIN - transmitter pin (by wiringpi numbering)\n TR_PIN - receiver pin (by wiringpi numbering)\n",argv, argv, argv, argv, argv, argv );
+  printf("Usage: %s [options]\n\
+Options:\n\
+ -p, --port           TCP port number: 1-65535\n\
+ -t, --pin_tx         TX_PIN - transmitter pin (by wiringpi numbering)\n\
+ -r, --pin_rx         RX_PIN - receiver pin (by wiringpi numbering)\n\
+ -l, --log_level      log level number: 0-nothing, 1-error log, 2-warning, 3-running status, 4-debug\n\
+ -H, --mqtt_host      MQTT Server (default: localhost)\n\
+ -U, --mqtt_username  MQTT Username\n\
+ -P, --mqtt_password  MQTT Password\n\
+ -T, --mqtt_topic     MQTT topic (default: \"/devices/rflink\")\n\
+\n\
+     --help           display this help and exit\n", argv);
 }
+
+int common_send(const char* buf, const int size)
+{
+	int ret = 1;
+	log(LOG_STATUS, "common send: ",false);
+	log(LOG_STATUS, buf);
+	if (mosq != NULL) {
+	    ret = mqtt_send(buf, size);
+	}
+	if (clientSocket != -1) {
+	    ret = socket_send(buf, size);
+	}
+	return ret;
+}
+
 
 int main(int argc, char *argv[]) {
 	int port=DEFAULT_TCP_PORT;
 	int scan_log=logLevel;				// form sscanf("%d", int) who make with int not byte
 	int scan_pin_tx=PIN_RF_TX_DATA;
 	int scan_pin_rx=PIN_RF_RX_DATA;
+	boolean mqtt_init_need=false;
 	
-	switch(argc)
-	{
-		case 1:
-			break;
-		case 2:
-			if (strcmp(argv[1],"-h")!=0 and \
-				sscanf(argv[1],"%d",&port)!=EOF ) break;
-			help(argv[0]);
-			return false;
-		case 3:
-			if (sscanf(argv[1],"%d",&port)!=EOF and \
-				sscanf(argv[2],"%d",&scan_log)!=EOF and \
-				( scan_log>=0 and scan_log<=4 ) ) break;
-			help(argv[0]);
-			return false;
-		case 4:
-			if (sscanf(argv[1],"%d",&port)!=EOF and \
-				sscanf(argv[2],"%d",&scan_pin_tx)!=EOF and \
-				sscanf(argv[3],"%d",&scan_pin_rx)!=EOF ) break;
-			help(argv[0]);
-			return false;
-		case 5:
-			if (sscanf(argv[1],"%d",&port)!=EOF and \
-				sscanf(argv[2],"%d",&scan_pin_tx)!=EOF and \
-				sscanf(argv[3],"%d",&scan_pin_rx)!=EOF and \
-				sscanf(argv[4],"%d",&scan_log)!=EOF and
-				( scan_log>=0 and scan_log<=4 ) )
-				 break;
-			help(argv[0]);
-			return false;
-		default:
-			help(argv[0]);
-			return false;
-			
-	}
+	static struct option long_options[] = {
+          {"help",     no_argument, 0, 'h'},
+          {"port",     required_argument, 0, 'p'},
+          {"pin_tx",    required_argument, 0, 't'},
+          {"pin_rx",    required_argument, 0, 'r'},
+          {"log_level", required_argument, 0, 'l'},
+          {"mqtt_host", required_argument, 0, 'H'},
+          {"mqtt_username", required_argument, 0, 'U'},
+          {"mqtt_password", required_argument, 0, 'P'},
+          {"mqtt_topic", required_argument, 0, 'T'},
+          {0, 0, 0, 0}
+        };
+        int c;
+
+        while (1) {
+          int option_index = 0;
+          c = getopt_long (argc, argv, "hp:t:r:l:H:U:P:T:",
+                       long_options, &option_index);
+          if (c == -1) break;
+
+          switch (c) {
+            case 'h':
+              help(argv[0]);
+              return 0;
+            case 'p':
+              if (sscanf(optarg,"%d",&port)==EOF) {
+                help(argv[0]);
+                return false;
+              }
+              break;
+
+            case 't':
+              if (sscanf(optarg,"%d",&scan_pin_tx)==EOF) {
+                help(argv[0]);
+                return false;
+              }
+              break;
+
+            case 'r':
+              if (sscanf(optarg,"%d",&scan_pin_rx)==EOF) {
+                help(argv[0]);
+                return false;
+              }
+              break;
+
+            case 'l':
+              if (sscanf(optarg,"%d",&scan_log)==EOF or !(scan_log>=0 and scan_log<=4) ) {
+                help(argv[0]);
+                return false;
+              }
+              break;
+
+            case 'H':
+              mqtt_host=optarg;
+              mqtt_init_need=true;
+              break;
+
+            case 'U':
+              mqtt_username=optarg;
+              mqtt_init_need=true;
+              break;
+
+            case 'P':
+              mqtt_pw=optarg;
+              mqtt_init_need=true;
+              break;
+
+            case 'T':
+              mqtt_topic=optarg;
+              mqtt_init_need=true;
+              break;
+
+            case '?':
+              help(argv[0]);
+              break;
+
+            default:
+              abort ();
+          }
+        }
 	logLevel=(byte) scan_log;
 	PIN_RF_TX_DATA=(byte) scan_pin_tx;
 	PIN_RF_RX_DATA=(byte) scan_pin_rx;
@@ -215,6 +291,12 @@ int main(int argc, char *argv[]) {
 	log(LOG_STATUS, pbuffer);
 
 	setup();
+	if (mqtt_init_need) {
+	  printf("MQTT init with server: %s, topic: %s, username: %s\n",mqtt_host, mqtt_topic, mqtt_username);
+	  mqtt_setup(mqtt_host, mqtt_topic, mqtt_username, mqtt_pw);
+	}
+	Serial.set_send_function(common_send); // enable Serial.println common send function
+	StartScanEventTheader();
 	TCPserver(port);
 }
 /*********************************************************************************************/

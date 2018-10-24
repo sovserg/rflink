@@ -6,7 +6,7 @@
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Control and Sniffer devices on 433 MHz for Home Automation System
-# Description:       This daemon will start 433 MHz control and sniffer and specialy used for Domoticz Home Automation System
+# Description:       This daemon will start 433 MHz control and sniffer
 ### END INIT INFO
 
 
@@ -20,13 +20,16 @@ PIN_TX=28
 PIN_RX=29
 log_level=3
 log_file=""
+mqtt_username=""
+mqtt_pw=""
+mqtt_topic="/devices/rflink"
 
 #include config file  if exist (may redefine TCP_port, log_level, log_file)
 if [ -f "$config_file" ]; then
     . /etc/rflink.conf
 fi
 
-CONFIG="$TCP_port $PIN_TX $PIN_RX $log_level"
+CONFIG="-p $TCP_port -t $PIN_TX -r $PIN_RX -l $log_level -H $mqtt_host -U $mqtt_username -P $mqtt_pw -T $mqtt_topic"
 
 . /lib/lsb/init-functions
 

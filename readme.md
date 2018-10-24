@@ -5,7 +5,8 @@ This solution discrem wide range of sesors, socket, remote controls, door bells,
 meteorological stations, etc. of many manufectures.
 Is suitable for create Home automation.
 RFLink have support for many home automation system etc.:
-   Domoticz (tested), Jeedom, Pimatic, Domotiga, OpenHAB, HoMIDoM
+   Domoticz (tested), Jeedom, Pimatic, Domotiga, OpenHAB, HoMIDoM,
+   MajorDoMo (tested via mosquitto server and MQTT module)
 
 ## RFLink for raspberryPI
 Oreginal version of RFlink run on arduino. **RPi_rflink** directory contain modification free version RFlink for run

@@ -1,9 +1,9 @@
 # About
 
 Modification RFlink for run on raspberryPI. ( http://www.nemcon.nl/blog2/ )
-This modification enable connect RF tranceiver and receiver directly into free raspberryPI pins.
+This modification enable connect RF transceiver and receiver directly into free raspberryPI pins.
 Instead comunication with serial port use TCP conecction.
-This modification use interrupt and theaders for reduce cpu load.
+This modification use interrupt and threaders for reduce cpu load.
 
 ## Compile and install
 #### Compile
@@ -13,22 +13,23 @@ After that you can compile on this directory by executing *make* . This generate
 #### Install
 After taht you can copy RFlink into /opt/rflink and install initialization stript as standart linux daemon by *make install*.
 If you can automaticaly start this daemon after start system than type *make autostart_on*.
-Addions plugins may by add into standart diractory *../Plugins* and enableb in *../Config/Config_02.c* (you can change config file into *./Makefile* by edit varibale CONFIG_PLUGINS).
+Addions plugins may by add into standart directory *../Plugins* and enabled in *../Config/Config_02.c* (you can change config file into *./Makefile* by edit varibale CONFIG_PLUGINS).
 
 ## Run from comandline
-Use:
+Usage:
 ```
- *sudo /opt/rflink/RFlink* 
- *sudo /opt/rflink/RFlink TCP_port_number* 
- *sudo /opt/rflink/RFlink TCP_port_number log_level_number* 
- *sudo /opt/rflink/RFlink TCP_port_number TX_PIN RX_PIN* 
- *sudo /opt/rflink/RFlink TCP_port_number TX_PIN RX_PIN log_level_number*
- or *sudo /opt/rflink/RFlink -h*  for this help
+    /opt/rflink/RFlink [options]
+Options:
+ -p, --port           TCP port number: 1-65535
+ -t, --pin_tx         TX_PIN - transmitter pin (by wiringpi numbering)
+ -r, --pin_rx         RX_PIN - receiver pin (by wiringpi numbering)
+ -l, --log_level      log level number: 0-nothing, 1-error log, 2-warning, 3-running status, 4-debug
+ -H, --mqtt_host      MQTT Server (default: localhost)
+ -U, --mqtt_username  MQTT Username
+ -P, --mqtt_password  MQTT Password
+ -T, --mqtt_topic     MQTT topic (default: "/devices/rflink")
 
- TCP_port_number: 1-65535
- log_level number: 0-nothing, 1-error log, 2-warning, 3-running status, 4-debug
- TX_PIN - transmitter pin (by wiringpi numbering)
- TR_PIN - receiver pin (by wiringpi numbering)
+     --help           display this help and exit
 ```
 
 For view wiringpi numbering pins run command *gpio readall* or see bellow for numbering raspberryPI v3:
@@ -60,7 +61,7 @@ For view wiringpi numbering pins run command *gpio readall* or see bellow for nu
  | BCM | wPi |   Name  | Mode | V | Physical | V | Mode | Name    | wPi | BCM |
  +-----+-----+---------+------+---+---Pi 3---+---+------+---------+-----+-----+
 
-PS: rigt columb is wPi
+PS: right column is wPi
 ```
 
 ## run as daemon (service)
